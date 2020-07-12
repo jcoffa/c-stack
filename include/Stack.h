@@ -2,6 +2,7 @@
 #define STACK_H
 
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -32,7 +33,7 @@ typedef struct stackFrame {
  */
 typedef struct stack {
 	Frame *top;					// Stack frame at the top of the stack
-	unsigned int length;		// Number of stack frames in the stack
+	unsigned int size;			// Number of stack frames in the stack
 	void (*deleteData)(void *);	// Function pointer to free an element in the stack
 	char *(*printData)(void *);	// Function pointer to create a string from a stack element
 } Stack;
@@ -57,7 +58,13 @@ typedef struct stack {
  *
  * Examples of these functions are provided for string (char *) data in the README.
  */
-Stack *stackNew(size_t elemSize, void (*deleteFunc)(void *), char *(*printFunc)(void *));
+Stack *stackNew(void (*deleteFunc)(void *), char *(*printFunc)(void *));
+
+
+/*
+ * Allocates memory for a new Frame struct and returns a pointer to it.
+ */
+Frame *stackFrameNew(void *data);
 
 
 /*
@@ -88,6 +95,12 @@ void *stackPeek(const Stack *stack);
  * Returns the top of the stack after removing it from the stack.
  */
 void *stackPop(Stack *stack);
+
+
+/*
+ * Returns the number of elements in the stack.
+ */
+unsigned int stackGetSize(const Stack *stack);
 
 
 /*
@@ -128,6 +141,13 @@ char *stackToString(const Stack *stack);
  * A newline is printed after the stack-string is done printing.
  */
 void stackPrint(const Stack *stack);
+
+
+/*
+ * Execute a function `func` on each node in the stack
+ * starting from the top and working downwards.
+ */
+void stackMap(Stack *stack, void (*func)(Frame *));
 
 #endif	// STACK_H
 
