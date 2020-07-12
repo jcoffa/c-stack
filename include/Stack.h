@@ -34,7 +34,7 @@ typedef struct stack {
 	Frame *top;					// Stack frame at the top of the stack
 	unsigned int length;		// Number of stack frames in the stack
 	void (*deleteData)(void *);	// Function pointer to free an element in the stack
-	char *(*printData)(void *);	// Fucntion pointer to create a string from a stack element
+	char *(*printData)(void *);	// Function pointer to create a string from a stack element
 } Stack;
 
 
@@ -43,7 +43,7 @@ typedef struct stack {
  *************/
 
 /*
- * Function to initialize the AVL Tree metadata head to the appropriate function pointers.
+ * Function to initialize the Stack metadata head to the appropriate function pointers.
  * Allocates memory to the struct, unless any of the function pointers are NULL. In this
  * case, NULL is returned instead and no memory is allocated.
  *
@@ -52,10 +52,8 @@ typedef struct stack {
  * The (void *) arguments are to be casted into their proper data type (i.e. whatever
  * data type the tree will be holding) and do as follows:
  *
- *  char *printFunc(void *) : return a string representation of `toPrint`
+ *  char *printFunc(void *toPrint)  : return a string representation of `toPrint`
  *  void deleteFunc(void *toDelete) : free all memory associated with `toDelete`
- *  int comapreFunc(const void *a, const void *b) : compare `a` and `b`, utilizing the same
- *                                                  logic as `strcmp`
  *
  * Examples of these functions are provided for string (char *) data in the README.
  */
@@ -83,7 +81,7 @@ void stackPush(Stack *stack, void *data);
 /*
  * Returns the top of the stack without removing it.
  */
-void *stackPeek(Stack *stack);
+void *stackPeek(const Stack *stack);
 
 
 /*
