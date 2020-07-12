@@ -81,8 +81,16 @@ void stackFree(Stack *stack);
 
 /*
  * Pushes the data to the top of the stack.
+ * If the push operation can't be completed for whatever reason,
+ * this function returns `false`. Otherwise, it returns `true` for a
+ * successful push.
+ *
+ * `false` may be returned if `stack` is NULL, or if memory can't
+ * be allocated to create a new StackFrame. Both of these scenarios
+ * are incredibly unlikely; assuming proper use of the functions
+ * in this library and sufficient memory is available to the system.
  */
-void stackPush(Stack *stack, void *data);
+bool stackPush(Stack *stack, void *data);
 
 
 /*

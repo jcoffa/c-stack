@@ -60,16 +60,22 @@ void stackFree(Stack *stack) {
 }
 
 
-void stackPush(Stack *stack, void *data) {
+bool stackPush(Stack *stack, void *data) {
 	if (stack == NULL) {
-		return;
+		return false;
 	}
 
 	Frame *toPush = stackFrameNew(data);
 
+	// Can't assume malloc works every time, no matter how unlikely
+	if (toPush == NULL) {
+		return false;
+	}
+
 	toPush->next = stack->top;
 	stack->top = toPush;
 	(stack->size)++;
+	return true;
 }
 
 
