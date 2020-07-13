@@ -29,7 +29,7 @@ typedef struct stackFrame {
 
 /*
  * Metadata top of the stack. 
- * Contains the function pointers for working with the abstracted list data.
+ * Contains the function pointers for working with the abstracted stack data.
  */
 typedef struct stack {
 	Frame *top;					// Stack frame at the top of the stack
@@ -51,7 +51,7 @@ typedef struct stack {
  * The Stack provides an interface to a generic collection of data. The two 
  * function pointers allow the struct to print and delete its data.
  * The (void *) arguments are to be casted into their proper data type (i.e. whatever
- * data type the tree will be holding) and do as follows:
+ * data type the stack will be holding) and do as follows:
  *
  *  char *printFunc(void *toPrint)  : return a string representation of `toPrint`
  *  void deleteFunc(void *toDelete) : free all memory associated with `toDelete`
