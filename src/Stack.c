@@ -1,37 +1,22 @@
 #include "Stack.h"
 
 
-Stack *stackNew(void (*deleteFunc)(void *), char *(*printFunc)(void *)) {
+Stack *stackNew(int maxSize, void (*deleteFunc)(void *), char *(*printFunc)(void *)) {
 	if (deleteFunc == NULL || printFunc == NULL) {
 		return NULL;
 	}
 
-	Stack *toReturn = malloc(sizeof(Stack));
+	Stack *toReturn = malloc(sizeof(Stack) + (sizeof(void*) * maxSize));
 
 	// Can't assume malloc works every time, no matter how unlikely
 	if (toReturn == NULL) {
 		return NULL;
 	}
 
-	toReturn->top = NULL;
-	toReturn->size = 0;
+	toReturn->top = -1;
+	toReturn->maxSize = maxSize;
 	toReturn->deleteData = deleteFunc;
 	toReturn->printData = printFunc;
-
-	return toReturn;
-}
-
-
-Frame *stackFrameNew(void *data) {
-	Frame *toReturn = malloc(sizeof(Frame));
-
-	// Can't assume malloc works every time, no matter how unlikely
-	if (toReturn == NULL) {
-		return NULL;
-	}
-
-	toReturn->data = data;
-	toReturn->next = NULL;
 
 	return toReturn;
 }
@@ -43,7 +28,7 @@ void stackClear(Stack *stack) {
 	}
 
 	while (!stackIsEmpty(stack)) {
-		// stackPop already removes and frees the stack Frame struct,
+		// stackPop already removes and frees the stack DynFrame struct,
 		// so we only have to delete the frame's stored data
 		stack->deleteData(stackPop(stack));
 	}
@@ -61,62 +46,48 @@ void stackFree(Stack *stack) {
 
 
 bool stackPush(Stack *stack, void *data) {
-	if (stack == NULL) {
+	if (stack == NULL || stackIsFull(stack)) {
 		return false;
 	}
 
-	Frame *toPush = stackFrameNew(data);
-
-	// Can't assume malloc works every time, no matter how unlikely
-	if (toPush == NULL) {
-		return false;
-	}
-
-	toPush->next = stack->top;
-	stack->top = toPush;
-	(stack->size)++;
+	(stack->data)[++stack->top] = data;
 	return true;
 }
 
 
 void *stackPeek(const Stack *stack) {
-	if (stack == NULL || stack->top == NULL) {
+	if (stack == NULL || stackIsEmpty(stack)) {
 		return NULL;
 	}
 
-	return stack->top->data;
+	return (stack->data)[stack->top];
 }
 
 
 void *stackPop(Stack *stack) {
-	if (stack == NULL || stack->top == NULL) {
+	if (stack == NULL || stackIsEmpty(stack)) {
 		return NULL;
 	}
 
-	// Save the top frame and its data
-	Frame *top = stack->top;
-	void *toReturn = top->data;
-
-	// Move the stack pointer
-	stack->top = stack->top->next;
-	(stack->size)--;
-
-	// Free the removed frame and return its data
-	free(top);
-	return toReturn;
+	return (stack->data)[(stack->top)--];
 }
 
 
-unsigned int stackGetSize(const Stack *stack) {
+int stackGetSize(const Stack *stack) {
 	if (stack == NULL) {
 		return 0;
 	}
-	return stack->size;
+	return stack->top + 1;
 }
 
 
 bool stackIsEmpty(const Stack *stack) {
-	return stackGetSize(stack) == 0;
+	return stack->top < 0;
+}
+
+
+bool stackIsFull(const Stack *stack) {
+	return stack->top == stack->maxSize - 1;
 }
 
 
@@ -130,7 +101,7 @@ char *stackTopToString(const Stack *stack) {
 		toReturn = malloc(sizeof(char));
 		toReturn[0] = '\0';
 	} else {
-		toReturn = stack->printData(stack->top->data);
+		toReturn = stack->printData(stackPeek(stack));
 	}
 
 	return toReturn;
@@ -157,26 +128,17 @@ char *stackToString(const Stack *stack) {
 	char *toReturn = stackTopToString(stack);
 	size_t length = strlen(toReturn);
 
-	// Prepare to iterate over the rest of the stack beyond the top
-	Frame *cur;
-	if (stackIsEmpty(stack)) {
-		// If the stack is empty then `cur = stack->top->next`
-		// will error out or segfault since `stack->top` is NULL,
-		// so this guard is necessary
-		cur = NULL;
-	} else {
-		cur = stack->top->next;
-	}
+	// Iterate over all elements beyond the first
+	void *cur;
+	for (int i = stack->top-1; i >= 0; i--) {
+		cur = (stack->data)[i];
 
-	while (cur != NULL) {
-		char *frameStr = stack->printData(cur->data);
-		length += strlen(frameStr) + 1;	// +1 for newline
+		char *dataStr = stack->printData(cur);
+		length += strlen(dataStr) + 1;	// +1 for newline
 		toReturn = realloc(toReturn, length + 1);	// +1 for null terminator
 		strcat(toReturn, "\n");
-		strcat(toReturn, frameStr);
-		free(frameStr);
-
-		cur = cur->next;
+		strcat(toReturn, dataStr);
+		free(dataStr);
 	}
 
 	return toReturn;
@@ -191,5 +153,16 @@ void stackPrint(const Stack *stack) {
 	char *toPrint = stackToString(stack);
 	printf("%s\n", toPrint);
 	free(toPrint);
+}
+
+
+void stackMap(Stack *stack, void (*func)(void *)) {
+	if (stack == NULL) {
+		return;
+	}
+
+	for (int i = stack->top; i >= 0; i--) {
+		func((stack->data)[i]);
+	}
 }
 

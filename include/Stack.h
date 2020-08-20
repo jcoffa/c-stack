@@ -11,31 +11,23 @@
  **************/
 
 /*
- * This stack implementation is a "Linked List Stack" (often abbreviated to "Linked Stack"),
- * which uses a singly-linked list to store a collection of elements.
- *
- * This approach, in contrast to the "Array Stack", is typically more memory efficient
- * for large stacks (because memory is allocated per-element instead of having lots of
- * empty space in an array) but slightly less runtime efficient on average due to the
- * expensiveness of allocating memory every time a new item is pushed.
- *
- * This structure represents a node in the linked stack that holds a single piece of
- * abstracted (void *) data.
- */
-typedef struct stackFrame {
-	void *data;
-	struct stackFrame *next;
-} Frame;
-
-/*
  * Metadata top of the stack. 
  * Contains the function pointers for working with the abstracted stack data.
+ *
+ * This stack implementation is an "Array Stack", which uses an array to store a collection of elements.
+ *
+ * This approach, in contrast to the "Linked List Stack", is less memory efficient
+ * for large stacks (because there is typically empty within the underlying array
+ * whenever the stack isn't full, whereas the linked list stack allocates memory
+ * per-element) but slightly more runtime efficient on average due to no memory
+ * allocation being performed whenever a new element is pushed onto the stack.
  */
 typedef struct stack {
-	Frame *top;					// Stack frame at the top of the stack
-	unsigned int size;			// Number of stack frames in the stack
+	int top;					// Number of elements in the stack
+	int maxSize;				// Maximum number of elements this stack can hold
 	void (*deleteData)(void *);	// Function pointer to free an element in the stack
 	char *(*printData)(void *);	// Function pointer to create a string from a stack element
+	void *data[];				// Data stored by the stack
 } Stack;
 
 
@@ -44,7 +36,8 @@ typedef struct stack {
  *************/
 
 /*
- * Function to initialize the Stack metadata head to the appropriate function pointers.
+ * Function to initialize the Stack metadata head to the appropriate function pointers
+ * and giving the maximum size of the stack.
  * Allocates memory to the struct, unless any of the function pointers are NULL. In this
  * case, NULL is returned instead and no memory is allocated.
  *
@@ -58,13 +51,7 @@ typedef struct stack {
  *
  * Examples of these functions are provided for string (char *) data in the README.
  */
-Stack *stackNew(void (*deleteFunc)(void *), char *(*printFunc)(void *));
-
-
-/*
- * Allocates memory for a new Frame struct and returns a pointer to it.
- */
-Frame *stackFrameNew(void *data);
+Stack *stackNew(int maxSize, void (*deleteFunc)(void *), char *(*printFunc)(void *));
 
 
 /*
@@ -85,30 +72,35 @@ void stackFree(Stack *stack);
  * this function returns `false`. Otherwise, it returns `true` for a
  * successful push.
  *
- * `false` may be returned if `stack` is NULL, or if memory can't
- * be allocated to create a new StackFrame. Both of these scenarios
- * are incredibly unlikely; assuming proper use of the functions
- * in this library and sufficient memory is available to the system.
+ * `false` may be returned if `stack` is NULL, or if the stack is full.
  */
 bool stackPush(Stack *stack, void *data);
 
 
 /*
- * Returns the top of the stack without removing it.
+ * Returns the top of the stack without removing it,
+ * or NULL if the stack is empty.
+ *
+ * NULL may also be returned if NULL was actually being stored in that
+ * position in the stack.
  */
 void *stackPeek(const Stack *stack);
 
 
 /*
- * Returns the top of the stack after removing it from the stack.
+ * Returns the top of the stack after removing it from the stack,
+ * or NULL if the stack is empty.
+ *
+ * NULL may also be returned if NULL was actually being stored in that
+ * position in the stack.
  */
 void *stackPop(Stack *stack);
 
 
 /*
- * Returns the number of elements in the stack.
+ * Returns the number of elements in the stack, or -1 if the stack is NULL.
  */
-unsigned int stackGetSize(const Stack *stack);
+int stackGetSize(const Stack *stack);
 
 
 /*
@@ -118,10 +110,16 @@ bool stackIsEmpty(const Stack *stack);
 
 
 /*
+ * Returns true if the Stack doesn't have space to store any more elements, and false otherwise.
+ */
+bool stackIsFull(const Stack *stack);
+
+
+/*
  * Returns a string representing the element at the top of the Stack using the stack's
  * `printData` function pointer to create the string.
  *
- * The string msut be freed by the calling function after use.
+ * The string must be freed by the calling function after use.
  */
 char *stackTopToString(const Stack *stack);
 
@@ -152,10 +150,10 @@ void stackPrint(const Stack *stack);
 
 
 /*
- * Execute a function `func` on each node in the stack
+ * Execute a function `func` on each element in the stack
  * starting from the top and working downwards.
  */
-void stackMap(Stack *stack, void (*func)(Frame *));
+void stackMap(Stack *stack, void (*func)(void *));
 
 #endif	// STACK_H
 
